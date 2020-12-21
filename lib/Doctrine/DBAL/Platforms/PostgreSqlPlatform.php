@@ -231,7 +231,7 @@ class PostgreSqlPlatform extends AbstractPlatform
      */
     public function getListDatabasesSQL()
     {
-        return 'SELECT datname FROM pg_database';
+        return 'SELECT datname FROM sys_database';
     }
 
     /**
@@ -241,7 +241,7 @@ class PostgreSqlPlatform extends AbstractPlatform
     {
         return "SELECT schema_name AS nspname
                 FROM   information_schema.schemata
-                WHERE  schema_name NOT LIKE 'pg\_%'
+                WHERE  schema_name NOT LIKE 'sys\_%'
                 AND    schema_name != 'information_schema'";
     }
 
@@ -253,7 +253,7 @@ class PostgreSqlPlatform extends AbstractPlatform
         return "SELECT sequence_name AS relname,
                        sequence_schema AS schemaname
                 FROM   information_schema.sequences
-                WHERE  sequence_schema NOT LIKE 'pg\_%'
+                WHERE  sequence_schema NOT LIKE 'sys\_%'
                 AND    sequence_schema != 'information_schema'";
     }
 
@@ -265,7 +265,7 @@ class PostgreSqlPlatform extends AbstractPlatform
         return "SELECT quote_ident(table_name) AS table_name,
                        table_schema AS schema_name
                 FROM   information_schema.tables
-                WHERE  table_schema NOT LIKE 'pg\_%'
+                WHERE  table_schema NOT LIKE 'sys\_%'
                 AND    table_schema != 'information_schema'
                 AND    table_name != 'geometry_columns'
                 AND    table_name != 'spatial_ref_sys'
@@ -292,12 +292,12 @@ class PostgreSqlPlatform extends AbstractPlatform
      */
     public function getListTableForeignKeysSQL($table, $database = null)
     {
-        return 'SELECT quote_ident(r.conname) as conname, pg_catalog.pg_get_constraintdef(r.oid, true) as condef
-                  FROM pg_catalog.pg_constraint r
+        return 'SELECT quote_ident(r.conname) as conname, sys_catalog.sys_get_constraintdef(r.oid, true) as condef
+                  FROM sys_catalog.sys_constraint r
                   WHERE r.conrelid =
                   (
                       SELECT c.oid
-                      FROM pg_catalog.pg_class c, pg_catalog.pg_namespace n
+                      FROM sys_catalog.sys_class c, sys_catalog.sys_namespace n
                       WHERE ' . $this->getTableWhereClause($table) . " AND n.oid = c.relnamespace
                   )
                   AND r.contype = 'f'";
@@ -332,12 +332,12 @@ class PostgreSqlPlatform extends AbstractPlatform
 SELECT
     quote_ident(relname) as relname
 FROM
-    pg_class
+    sys_class
 WHERE oid IN (
     SELECT indexrelid
-    FROM pg_index, pg_class
-    WHERE pg_class.relname = %s
-        AND pg_class.oid = pg_index.indrelid
+    FROM sys_index, sys_class
+    WHERE sys_class.relname = %s
+        AND sys_class.oid = sys_index.indrelid
         AND (indisunique = 't' OR indisprimary = 't')
     )
 SQL
@@ -353,16 +353,16 @@ SQL
      */
     public function getListTableIndexesSQL($table, $database = null)
     {
-        return 'SELECT quote_ident(relname) as relname, pg_index.indisunique, pg_index.indisprimary,
-                       pg_index.indkey, pg_index.indrelid,
-                       pg_get_expr(indpred, indrelid) AS where
-                 FROM pg_class, pg_index
+        return 'SELECT quote_ident(relname) as relname, sys_index.indisunique, sys_index.indisprimary,
+                       sys_index.indkey, sys_index.indrelid,
+                       sys_get_expr(indpred, indrelid) AS where
+                 FROM sys_class, sys_index
                  WHERE oid IN (
                     SELECT indexrelid
-                    FROM pg_index si, pg_class sc, pg_namespace sn
+                    FROM sys_index si, sys_class sc, sys_namespace sn
                     WHERE ' . $this->getTableWhereClause($table, 'sc', 'sn') . '
                     AND sc.oid=si.indrelid AND sc.relnamespace = sn.oid
-                 ) AND pg_index.indexrelid = oid';
+                 ) AND sys_index.indexrelid = oid';
     }
 
     /**
@@ -374,7 +374,7 @@ SQL
      */
     private function getTableWhereClause($table, $classAlias = 'c', $namespaceAlias = 'n')
     {
-        $whereClause = $namespaceAlias . ".nspname NOT IN ('pg_catalog', 'information_schema', 'pg_toast') AND ";
+        $whereClause = $namespaceAlias . ".nspname NOT IN ('sys_catalog', 'information_schema', 'sys_toast') AND ";
         if (strpos($table, '.') !== false) {
             [$schema, $table] = explode('.', $table);
             $schema           = $this->quoteStringLiteral($schema);
@@ -404,25 +404,25 @@ SQL
                     quote_ident(a.attname) AS field,
                     t.typname AS type,
                     format_type(a.atttypid, a.atttypmod) AS complete_type,
-                    (SELECT t1.typname FROM pg_catalog.pg_type t1 WHERE t1.oid = t.typbasetype) AS domain_type,
+                    (SELECT t1.typname FROM sys_catalog.sys_type t1 WHERE t1.oid = t.typbasetype) AS domain_type,
                     (SELECT format_type(t2.typbasetype, t2.typtypmod) FROM
-                      pg_catalog.pg_type t2 WHERE t2.typtype = 'd' AND t2.oid = a.atttypid) AS domain_complete_type,
+                      sys_catalog.sys_type t2 WHERE t2.typtype = 'd' AND t2.oid = a.atttypid) AS domain_complete_type,
                     a.attnotnull AS isnotnull,
                     (SELECT 't'
-                     FROM pg_index
-                     WHERE c.oid = pg_index.indrelid
-                        AND pg_index.indkey[0] = a.attnum
-                        AND pg_index.indisprimary = 't'
+                     FROM sys_index
+                     WHERE c.oid = sys_index.indrelid
+                        AND sys_index.indkey[0] = a.attnum
+                        AND sys_index.indisprimary = 't'
                     ) AS pri,
-                    (SELECT pg_get_expr(adbin, adrelid)
-                     FROM pg_attrdef
-                     WHERE c.oid = pg_attrdef.adrelid
-                        AND pg_attrdef.adnum=a.attnum
+                    (SELECT sys_get_expr(adbin, adrelid)
+                     FROM sys_attrdef
+                     WHERE c.oid = sys_attrdef.adrelid
+                        AND sys_attrdef.adnum=a.attnum
                     ) AS default,
-                    (SELECT pg_description.description
-                        FROM pg_description WHERE pg_description.objoid = c.oid AND a.attnum = pg_description.objsubid
+                    (SELECT sys_description.description
+                        FROM sys_description WHERE sys_description.objoid = c.oid AND a.attnum = sys_description.objsubid
                     ) AS comment
-                    FROM pg_attribute a, pg_class c, pg_type t, pg_namespace n
+                    FROM sys_attribute a, sys_class c, sys_type t, sys_namespace n
                     WHERE " . $this->getTableWhereClause($table, 'c', 'n') . '
                         AND a.attnum > 0
                         AND a.attrelid = c.oid
@@ -452,7 +452,7 @@ SQL
      */
     public function getDisallowDatabaseConnectionsSQL($database)
     {
-        return "UPDATE pg_database SET datallowconn = 'false' WHERE datname = " . $this->quoteStringLiteral($database);
+        return "UPDATE sys_database SET datallowconn = 'false' WHERE datname = " . $this->quoteStringLiteral($database);
     }
 
     /**
@@ -468,7 +468,7 @@ SQL
      */
     public function getCloseActiveDatabaseConnectionsSQL($database)
     {
-        return 'SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = '
+        return 'SELECT sys_terminate_backend(procpid) FROM sys_stat_activity WHERE datname = '
             . $this->quoteStringLiteral($database);
     }
 
