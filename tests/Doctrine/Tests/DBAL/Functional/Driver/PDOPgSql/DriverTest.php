@@ -90,7 +90,7 @@ class DriverTest extends AbstractDriverTest
         $connection = $this->driver->connect($parameters, $user, $password);
 
         $hash      = microtime(true); // required to identify the record in the results uniquely
-        $sql       = sprintf('SELECT * FROM pg_stat_activity WHERE %d = %d', $hash, $hash);
+        $sql       = sprintf('SELECT * FROM sys_stat_activity WHERE %d = %d', $hash, $hash);
         $statement = $connection->query($sql);
         $records   = $statement->fetchAll();
 

@@ -27,7 +27,7 @@ class PostgreSQL100Platform extends PostgreSQL94Platform
                        increment AS increment_by
                 FROM   information_schema.sequences
                 WHERE  sequence_catalog = ' . $this->quoteStringLiteral($database) . "
-                AND    sequence_schema NOT LIKE 'pg\_%'
+                AND    sequence_schema NOT LIKE 'sys\_%'
                 AND    sequence_schema != 'information_schema'";
     }
 }

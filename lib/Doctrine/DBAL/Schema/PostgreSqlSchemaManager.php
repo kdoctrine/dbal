@@ -44,7 +44,7 @@ class PostgreSqlSchemaManager extends AbstractSchemaManager
     public function getSchemaNames()
     {
         $statement = $this->_conn->executeQuery(
-            // "SELECT nspname FROM pg_namespace WHERE nspname !~ '^pg_.*' AND nspname != 'information_schema'"
+            // "SELECT nspname FROM sys_namespace WHERE nspname !~ '^sys_.*' AND nspname != 'information_schema'"
 
             // update date 20201214
             // for kingbase
@@ -229,7 +229,7 @@ class PostgreSqlSchemaManager extends AbstractSchemaManager
         foreach ($tableIndexes as $row) {
             $colNumbers    = array_map('intval', explode(' ', $row['indkey']));
             $columnNameSql = sprintf(
-                'SELECT attnum, attname FROM pg_attribute WHERE attrelid=%d AND attnum IN (%s) ORDER BY attnum ASC',
+                'SELECT attnum, attname FROM sys_attribute WHERE attrelid=%d AND attnum IN (%s) ORDER BY attnum ASC',
                 $row['indrelid'],
                 implode(' ,', $colNumbers)
             );

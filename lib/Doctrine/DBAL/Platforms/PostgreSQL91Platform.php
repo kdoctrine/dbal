@@ -44,7 +44,7 @@ class PostgreSQL91Platform extends PostgreSqlPlatform
         $parts = explode('AS complete_type,', $sql, 2);
 
         return $parts[0] . 'AS complete_type, '
-            . '(SELECT tc.collcollate FROM pg_catalog.pg_collation tc WHERE tc.oid = a.attcollation) AS collation,'
+            . '(SELECT tc.collcollate FROM sys_catalog.sys_collation tc WHERE tc.oid = a.attcollation) AS collation,'
             . $parts[1];
     }
 }

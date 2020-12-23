@@ -58,7 +58,7 @@ class PostgreSQL92PlatformTest extends AbstractPostgreSqlPlatformTestCase
     public function testReturnsCloseActiveDatabaseConnectionsSQL(): void
     {
         self::assertSame(
-            "SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = 'foo'",
+            "SELECT sys_terminate_backend(pid) FROM sys_stat_activity WHERE datname = 'foo'",
             $this->platform->getCloseActiveDatabaseConnectionsSQL('foo')
         );
     }

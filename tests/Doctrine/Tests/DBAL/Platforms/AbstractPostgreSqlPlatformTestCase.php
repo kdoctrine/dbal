@@ -944,7 +944,7 @@ abstract class AbstractPostgreSqlPlatformTestCase extends AbstractPlatformTestCa
     public function testReturnsDisallowDatabaseConnectionsSQL(): void
     {
         self::assertSame(
-            "UPDATE pg_database SET datallowconn = 'false' WHERE datname = 'foo'",
+            "UPDATE sys_database SET datallowconn = 'false' WHERE datname = 'foo'",
             $this->platform->getDisallowDatabaseConnectionsSQL('foo')
         );
     }
@@ -952,7 +952,7 @@ abstract class AbstractPostgreSqlPlatformTestCase extends AbstractPlatformTestCa
     public function testReturnsCloseActiveDatabaseConnectionsSQL(): void
     {
         self::assertSame(
-            "SELECT pg_terminate_backend(procpid) FROM pg_stat_activity WHERE datname = 'foo'",
+            "SELECT sys_terminate_backend(procpid) FROM sys_stat_activity WHERE datname = 'foo'",
             $this->platform->getCloseActiveDatabaseConnectionsSQL('foo')
         );
     }
